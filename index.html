@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="shortcut icon" href="https://cdn0.iconfinder.com/data/icons/kameleon-free-pack-rounded/110/Chat-2-128.png" type="image/x-icon">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.0.26/css/bulma.min.css" >
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+  <title>Twitter Chat</title>
+  <!-- Codigo CSS Style -->
+  <style>
+  .login{
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+    }
+    #errorMsg{
+      margin: 1%;
+    }
+    .authButton{
+    margin: 1%;
+    }
+  </style>
+  <!--  Codigo HTML-->
+</head>
+<body>
+  <div class='is-flex login'>
+    <h1 class='subtitle is-2'>Twitter Chat</h1>
+    <button class='button is-primary is-large authButton' id="twitter" >
+      <span class="icon"><i class="fa fa-twitter"></i></span>
+      <span>twitter</span>&nbsp;&nbsp;&nbsp;&nbsp;
+    </button>
+    <button class='button is-info is-large authButton' id="facebook" >
+      <span class="icon"><i class="fa fa-facebook"></i></span>
+      <span>facebook</span>
+    </button>
+    <button class='button is-danger is-large authButton' id="google" >
+      <span class="icon"><i class="fa fa-google"></i></span>
+      <span>google</span>&nbsp;&nbsp;&nbsp;&nbsp;
+    </button>
+    <div id="errorMsg" class="notification is-warning title is-4">
+      <button id='msgClose' class="delete"></button>
+      couldn't log in
+    </div>
+  </div>
+</body>
+<!--  Codigo JScript-->
+  <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+  <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+  <script type="text/javascript" >
+  const ref = new Firebase("https://chat-app8210.firebaseio.com/");
+  $('#errorMsg').hide()
+  $(".authButton").click(function(){
+    const site = this.id
+    ref.authWithOAuthPopup(this.id, function(error, authData) {
+      if (error) handlesError()
+      else handlesSuccess(authData, site)
+    })
+  })
+  // Funcion en caso de error
+  function handlesError(){
+    $('#errorMsg').show()
+    $("#msgClose").click(function(){
+      $('#errorMsg').hide()
+    })
+  }
+  // Funcion en caso de exito
+  function handlesSuccess(authData, site){
+    let {displayName, profileImageURL, username } = authData[site]
+    username ? username : username=''
+    const auth = {displayName, profileImageURL,username }
+    localStorage.setItem("auth", JSON.stringify(auth))
+    window.location.replace("app.html");
+  }
+
+  </script>

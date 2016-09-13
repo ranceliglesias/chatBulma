@@ -1,0 +1,137 @@
+<html>
+<head>
+    <script src='https://cdn.firebase.com/js/client/2.2.1/firebase.js'></script>
+    <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js'></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.0.26/css/bulma.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+    <link rel="shortcut icon" href="data:image/x-icon;," type="image/x-icon">
+    <style>
+        #messagesDiv {
+            height: 75vh;
+            overflow: auto;
+        }
+        .nav {
+          padding: 0 10% 0 10%;
+        }
+        .chat-window {
+          margin: 2%;
+          padding: 0 10% 0 10%;
+        }
+        article{
+          padding: 1%;
+        }
+        .media-content{
+          margin-top: 1%;
+        }
+        figure{
+          margin-top: 1%;
+        }
+    </style>
+</head>
+
+<body>
+  <div class="hero is-primary">
+    <nav class="nav">
+      <div class="nav-left is-hidden-touch">
+        <p class="nav-item title is-4">
+          <span class="icon">
+            <i class="fa fa-twitter"></i> &nbsp;
+          </span> Twitter Chat
+          </p>
+        </div>
+        <div class="nav-center is-hidden-touch">
+          <p class="nav-item title is-4" id="username"></p>
+        </div>
+        <div class="nav-right">
+          <span class="nav-item">
+            <a class="button" id="logout" href="index.html">
+              <span class="icon">
+                <i class="fa fa-sign-out"></i>
+              </span>
+              <span>logout</span>
+            </a>
+          </span>
+        </div>
+      </nav>
+    </div>
+    <div class="chat-window">
+      <div id="messagesDiv"></div>
+      <div>
+        <p class="control has-addons">
+          <input class="input" id='messageInput' type="text" placeholder="Send Your Message">
+          <a id='sendButton' class="button is-primary">
+            Send
+          </a>
+        </p>
+      </div>
+    </div>
+    <script type="text/javascript">
+    // Definir mi coneccion a Firebase
+      const ref = new Firebase('https://chat-app8210.firebaseio.com/')
+      if (!localStorage.getItem('auth')){
+        $('#messageInput').prop("disabled", true).addClass('is-danger').attr("placeholder", "desabilitado")
+        $('#sendButton').text('no puedo').addClass('is-danger')
+      }
+
+      // Darle la bienvenida al usuario conectado
+      const {displayName, profileImageURL, username } = JSON.parse(localStorage.getItem('auth'))
+      $('#username').text('Welcome ' + displayName)
+
+      // Recibir la entrada de datos
+      $('#messageInput').keypress(function(e) {
+          if (e.keyCode == 13 ) sendMsg()
+      });
+      // Enviar los datos a Firebase
+      $('#sendButton').click(sendMsg)
+      function sendMsg(){
+        const message = $('#messageInput').val();
+        ref.push({message, profileImageURL, displayName, username});
+        $('#messageInput').val('');
+      }
+      // Recibir los nuevos datos de Firebase
+      ref.on('child_added', function(snapshot) {
+            const {message,displayName,profileImageURL, username} = snapshot.val()
+            // Codificar los mensajes para que Twitter los reciba
+            const encodedMessage = encodeURIComponent(message)
+            // Pasarle al navegador la variable encodedMessage, q es donde estan los mensajes
+            const url = `https://twitter.com/intent/tweet?text=${encodedMessage}`
+            displayChatMessage(message, profileImageURL, displayName, username, url);
+        })
+        // Mostrar los datos que salen de Firebase
+        function displayChatMessage(message, img, displayName, username, url) {
+          const date = new Date()
+          const minutes = date.getMinutes()
+          const hours = date.getHours()
+          $('<article class="is-fullwidth media card"  style="margin:20px;"/>').html(`<figure class="media-left">
+                <p >
+                  <img width='54px' src=${img}>
+                </p>
+              </figure>
+              <div class="media-content">
+                <div class="content">
+                  <p>
+                    <strong>${displayName}</strong> <small>@${username}</small> <small>${(hours+ 24) % 12 || 12}:${minutes}</small>
+                    <br>
+                    ${message}
+                  </p>
+                </div>
+                <nav class="level">
+                  <div class="level-left">
+                    <a class="level-item" href=${url}>
+                      <span class="icon is-small"><i class="fa fa-retweet"></i></span>
+                    </a>
+                  </div>
+                </nav>
+              </div>`
+            ).appendTo($('#messagesDiv'))
+            $('#messagesDiv')[0].scrollTop = $('#messagesDiv')[0].scrollHeight;
+  }
+
+        // Limpiar los datos del usuario al desconectarse
+        $('#logout').click(function(){
+          localStorage.clear()
+        })
+        </script>
+</body>
+
+</html>
